@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMessage } from '@/lib/telegramService'
 import { dispatchExternalWebhook } from '@/lib/webhookDispatcher'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,6 +41,51 @@ export async function POST(req: NextRequest) {
         telegramChatId,
         status: 'PAID',
       })
+
+      // Sincronizar com Supabase Oficial: Avançar Lead para Ganho
+      try {
+        const supabase = createAdminClient()
+        if (telegramChatId) {
+          await supabase
+            .from('leads')
+            .update({
+              stage: 'ganho',
+              score: 100,
+              score_badge: 'vip',
+              estimated_value: amount || 0,
+              notes: `Venda aprovada via PIX Firebot (Tx: ${transactionId})`,
+              last_interaction_at: new Date().toISOString(),
+            })
+            .eq('telegram_chat_id', telegramChatId)
+        } else if (customer?.email) {
+          await supabase
+            .from('leads')
+            .update({
+              stage: 'ganho',
+              score: 100,
+              score_badge: 'vip',
+              estimated_value: amount || 0,
+              notes: `Venda aprovada via PIX Firebot (Tx: ${transactionId})`,
+              last_interaction_at: new Date().toISOString(),
+            })
+            .eq('email', customer.email)
+        }
+
+        // Registrar em webhook_events
+        const { data: org } = await supabase.from('organizations').select('id').limit(1).single()
+        if (org) {
+          await supabase.from('webhook_events').insert({
+            organization_id: org.id,
+            direction: 'inbound',
+            event_type: 'firebot.venda.paga',
+            status_code: 200,
+            payload: body,
+            response_body: { success: true },
+          })
+        }
+      } catch (dbErr) {
+        console.error('[Supabase Firebot Sync Error]:', dbErr)
+      }
 
       return NextResponse.json(
         {

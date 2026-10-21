@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMessage } from '@/lib/telegramService'
 import { dispatchExternalWebhook } from '@/lib/webhookDispatcher'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // In-memory set for idempotency check (update_id deduplication)
 const processedUpdateIds = new Set<number>()
@@ -86,6 +87,101 @@ export async function POST(
       utm_campaign: utmCampaign,
       utm_content: utmContent,
     })
+
+    // 6.5 Sincronizar com Supabase Oficial
+    try {
+      const supabase = createAdminClient()
+      if (chatId) {
+        let leadId: string | undefined
+        const { data: existingLead } = await supabase
+          .from('leads')
+          .select('id, organization_id')
+          .eq('telegram_chat_id', chatId)
+          .maybeSingle()
+
+        if (existingLead) {
+          leadId = existingLead.id
+          await supabase
+            .from('leads')
+            .update({
+              name: leadName,
+              telegram_username: telegramUsername,
+              last_interaction_at: new Date().toISOString(),
+              ...(utmSource !== 'telegram' ? { utm_source: utmSource, utm_campaign: utmCampaign, utm_content: utmContent } : {}),
+            })
+            .eq('id', existingLead.id)
+        } else {
+          const { data: org } = await supabase.from('organizations').select('id').limit(1).single()
+          const orgId = org?.id || 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d'
+
+          const { data: newLead } = await supabase
+            .from('leads')
+            .insert({
+              organization_id: orgId,
+              name: leadName,
+              telegram_chat_id: chatId,
+              telegram_username: telegramUsername,
+              stage: 'novo',
+              score: utmSource !== 'telegram' ? 60 : 30,
+              score_badge: utmSource !== 'telegram' ? 'morno' : 'frio',
+              utm_source: utmSource,
+              utm_campaign: utmCampaign,
+              utm_content: utmContent,
+              last_interaction_at: new Date().toISOString(),
+            })
+            .select('id')
+            .single()
+
+          if (newLead) leadId = newLead.id
+        }
+
+        if (leadId) {
+          let { data: conv } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('lead_id', leadId)
+            .maybeSingle()
+
+          if (!conv) {
+            const { data: org } = await supabase.from('organizations').select('id').limit(1).single()
+            const orgId = org?.id || 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d'
+            const { data: newConv } = await supabase
+              .from('conversations')
+              .insert({
+                organization_id: orgId,
+                lead_id: leadId,
+                status: 'bot_active',
+                last_message: text,
+                unread_count: 1,
+              })
+              .select('id')
+              .single()
+            conv = newConv
+          } else {
+            await supabase
+              .from('conversations')
+              .update({
+                last_message: text,
+                last_message_at: new Date().toISOString(),
+              })
+              .eq('id', conv.id)
+          }
+
+          if (conv) {
+            await supabase.from('messages').insert({
+              conversation_id: conv.id,
+              lead_id: leadId,
+              sender_type: 'lead',
+              message_type: 'text',
+              text: text,
+              telegram_message_id: message.message_id || null,
+            })
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.error('[Supabase Telegram Sync Error]:', dbErr)
+    }
 
     // 7. Fast 200 OK to Telegram (idempotent, immediate)
     return NextResponse.json(
