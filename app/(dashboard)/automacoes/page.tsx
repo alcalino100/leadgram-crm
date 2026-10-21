@@ -1,20 +1,30 @@
 'use client'
 
-import { PagePlaceholder } from '@/components/shell/page-placeholder'
+import * as React from 'react'
+import { AutomationFlowBuilder } from '@/components/automations/flow-builder'
+import { Badge } from '@/components/ui/badge'
+import { Zap, Play, Layers } from 'lucide-react'
 
 export default function AutomacoesPage() {
   return (
-    <PagePlaceholder
-      title="Automações de Tráfego & Telegram"
-      description="Gatilhos e regras de distribuição, qualificação automática, aplicação de tags e alertas comerciais."
-      promptStep="Prompt 5"
-      features={[
-        'Gatilhos: novo lead, mensagem recebida, palavra-chave, tag aplicada, sem resposta',
-        'Ações: aplicar tag, mudar estágio, atribuir atendente, enviar mensagem Telegram, chamar webhook',
-        'Histórico e logs de execuções das regras automáticas',
-        'Distribuição em rodízio (Round-Robin) entre atendentes da equipe',
-        'Integração nativa com n8n, Make e webhooks externos'
-      ]}
-    />
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1 border-b border-zinc-800/80">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-zinc-100">Automações & Fluxos Visuais</h1>
+            <Badge variant="outline" className="font-mono-code text-[10px] text-cyan-400 border-cyan-500/30">
+              N8N Workflow Engine
+            </Badge>
+          </div>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Crie fluxos interativos de envio de áudio, vídeo, foto, texto, cobranças Pix e distribuição automática de leads
+          </p>
+        </div>
+      </div>
+
+      {/* Visual Flow Builder */}
+      <AutomationFlowBuilder />
+    </div>
   )
 }

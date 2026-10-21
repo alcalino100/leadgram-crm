@@ -1,6 +1,26 @@
 import { create } from 'zustand'
-import { Organization, Lead, LeadStageId, User, LeadEvent, Tag } from '@/types'
-import { mockOrganizations, mockLeads, mockUsers, mockTags } from '@/lib/mock-data'
+import { 
+  Organization, 
+  Lead, 
+  LeadStageId, 
+  User, 
+  LeadEvent, 
+  Tag, 
+  Conversation, 
+  Message, 
+  ConversationStatus, 
+  MessageType,
+  PaymentTransaction,
+  PaymentGatewayProvider
+} from '@/types'
+import { 
+  mockOrganizations, 
+  mockLeads, 
+  mockUsers, 
+  mockTags, 
+  mockConversations, 
+  mockMessages 
+} from '@/lib/mock-data'
 import { calculateLeadScore } from '@/lib/qualification'
 
 const initialEvents: LeadEvent[] = [
@@ -49,6 +69,9 @@ interface AppState {
   leads: Lead[]
   leadEvents: LeadEvent[]
   availableTags: Tag[]
+  conversations: Conversation[]
+  messages: Record<string, Message[]>
+  activeConversationId: string | null
   selectedLeadId: string | null
   isLeadDrawerOpen: boolean
   isSidebarOpen: boolean
@@ -57,6 +80,7 @@ interface AppState {
   // Actions
   setCurrentOrganization: (org: Organization) => void
   setSelectedLeadId: (id: string | null) => void
+  setActiveConversationId: (id: string | null) => void
   openLeadDrawer: (id: string) => void
   closeLeadDrawer: () => void
   toggleSidebar: () => void
@@ -68,6 +92,25 @@ interface AppState {
   toggleLeadTag: (leadId: string, tag: Tag) => void
   updateLeadNotes: (leadId: string, notes: string) => void
   addLead: (lead: Omit<Lead, 'id' | 'created_at' | 'updated_at' | 'score' | 'score_badge'>) => Lead
+
+  // Conversation & Messaging Mutations (Prompt 3)
+  updateConversationStatus: (conversationId: string, status: ConversationStatus) => void
+  sendTextMessage: (conversationId: string, text: string) => void
+  sendMediaMessage: (
+    conversationId: string, 
+    type: MessageType, 
+    mediaUrl: string, 
+    mediaName?: string, 
+    mediaDuration?: number, 
+    caption?: string
+  ) => void
+  generatePaymentLink: (
+    conversationId: string, 
+    leadId: string, 
+    amount: number, 
+    description: string, 
+    provider: PaymentGatewayProvider
+  ) => PaymentTransaction
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -77,6 +120,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   leads: mockLeads,
   leadEvents: initialEvents,
   availableTags: mockTags,
+  conversations: mockConversations,
+  messages: mockMessages,
+  activeConversationId: 'conv-1',
   selectedLeadId: null,
   isLeadDrawerOpen: false,
   isSidebarOpen: false,
@@ -91,6 +137,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setSelectedLeadId: (id) => set({ selectedLeadId: id }),
   
+  setActiveConversationId: (id) => set({ activeConversationId: id }),
+
   openLeadDrawer: (id) => set({ selectedLeadId: id, isLeadDrawerOpen: true }),
   
   closeLeadDrawer: () => set({ isLeadDrawerOpen: false }),
@@ -277,4 +325,155 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     return newLead
   },
+
+  // Prompt 3: Inbox Telegram actions
+  updateConversationStatus: (conversationId, status) => {
+    const state = get()
+    const updatedConversations = state.conversations.map((c) =>
+      c.id === conversationId
+        ? {
+            ...c,
+            status,
+            updated_at: new Date().toISOString(),
+          }
+        : c
+    )
+    set({ conversations: updatedConversations })
+  },
+
+  sendTextMessage: (conversationId, text) => {
+    const state = get()
+    const conversation = state.conversations.find((c) => c.id === conversationId)
+    if (!conversation) return
+
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      conversation_id: conversationId,
+      lead_id: conversation.lead_id,
+      sender_type: 'agent',
+      message_type: 'text',
+      text,
+      created_at: new Date().toISOString(),
+    }
+
+    const currentList = state.messages[conversationId] || []
+    const updatedMessages = {
+      ...state.messages,
+      [conversationId]: [...currentList, newMessage],
+    }
+
+    const updatedConversations = state.conversations.map((c) =>
+      c.id === conversationId
+        ? {
+            ...c,
+            last_message: text,
+            last_message_at: new Date().toISOString(),
+            status: 'in_human_service' as ConversationStatus,
+          }
+        : c
+    )
+
+    set({
+      messages: updatedMessages,
+      conversations: updatedConversations,
+    })
+  },
+
+  sendMediaMessage: (conversationId, type, mediaUrl, mediaName, mediaDuration, caption) => {
+    const state = get()
+    const conversation = state.conversations.find((c) => c.id === conversationId)
+    if (!conversation) return
+
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      conversation_id: conversationId,
+      lead_id: conversation.lead_id,
+      sender_type: 'agent',
+      message_type: type,
+      media_url: mediaUrl,
+      media_name: mediaName,
+      media_duration: mediaDuration,
+      caption,
+      text: caption || `Envio de ${type}`,
+      created_at: new Date().toISOString(),
+    }
+
+    const currentList = state.messages[conversationId] || []
+    const updatedMessages = {
+      ...state.messages,
+      [conversationId]: [...currentList, newMessage],
+    }
+
+    const updatedConversations = state.conversations.map((c) =>
+      c.id === conversationId
+        ? {
+            ...c,
+            last_message: caption || `[${type.toUpperCase()}]`,
+            last_message_at: new Date().toISOString(),
+          }
+        : c
+    )
+
+    set({
+      messages: updatedMessages,
+      conversations: updatedConversations,
+    })
+  },
+
+  generatePaymentLink: (conversationId, leadId, amount, description, provider) => {
+    const state = get()
+    const payment: PaymentTransaction = {
+      id: `pay-${Date.now()}`,
+      organization_id: state.currentOrganization?.id || 'org-agency-alpha',
+      lead_id: leadId,
+      amount,
+      status: 'pending',
+      method: 'pix',
+      provider,
+      description,
+      pix_copy_paste: `00020126580014br.gov.bcb.pix0136${Date.now()}5204000053039865405${amount.toFixed(2)}5802BR5925GrowthScale Agencia6009Sao Paulo62070503***6304E2CA`,
+      checkout_url: `https://checkout.growthscale.com.br/pay/${Date.now()}`,
+      created_at: new Date().toISOString(),
+    }
+
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      conversation_id: conversationId,
+      lead_id: leadId,
+      sender_type: 'agent',
+      message_type: 'payment_request',
+      text: `Cobrança Pix gerada: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)}`,
+      payment,
+      buttons: [
+        { text: '🔑 Copiar Código Pix', callback_data: 'copy_pix' },
+        { text: '💳 Abrir Checkout Cartão/Boleto', url: payment.checkout_url }
+      ],
+      created_at: new Date().toISOString(),
+    }
+
+    const currentList = state.messages[conversationId] || []
+    const updatedMessages = {
+      ...state.messages,
+      [conversationId]: [...currentList, newMessage],
+    }
+
+    // Register event
+    const newEvent: LeadEvent = {
+      id: `evt-${Date.now()}`,
+      lead_id: leadId,
+      organization_id: state.currentOrganization?.id || 'org-agency-alpha',
+      type: 'payment_generated',
+      title: 'Cobrança Pix Gerada no Telegram',
+      description: `Valor: ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount)} (${provider.toUpperCase()})`,
+      user_id: state.currentUser?.id,
+      created_at: new Date().toISOString(),
+    }
+
+    set({
+      messages: updatedMessages,
+      leadEvents: [newEvent, ...state.leadEvents],
+    })
+
+    return payment
+  }
 }))

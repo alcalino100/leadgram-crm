@@ -106,7 +106,7 @@ export interface Lead {
 
 export interface LeadSource {
   id: string
-  name: string // 'Meta Ads' | 'Google Ads' | 'TikTok Ads' | 'Orgânico' | 'Indicação' | 'Outro'
+  name: string
   icon?: string
   platform: 'meta' | 'google' | 'tiktok' | 'organic' | 'referral' | 'other'
 }
@@ -145,8 +145,22 @@ export interface Conversation {
   updated_at: string
 }
 
-export type MessageType = 'text' | 'photo' | 'video' | 'audio' | 'document' | 'location'
+export type MessageType = 
+  | 'text' 
+  | 'photo' 
+  | 'video' 
+  | 'audio' 
+  | 'document' 
+  | 'location'
+  | 'payment_request'
+
 export type MessageSender = 'lead' | 'bot' | 'agent'
+
+export interface MessageButton {
+  text: string
+  url?: string
+  callback_data?: string
+}
 
 export interface Message {
   id: string
@@ -156,7 +170,11 @@ export interface Message {
   message_type: MessageType
   text?: string
   media_url?: string
+  media_name?: string
+  media_duration?: number // em segundos para áudios/vídeos
   caption?: string
+  buttons?: MessageButton[]
+  payment?: PaymentTransaction
   telegram_message_id?: number
   metadata?: Record<string, any>
   created_at: string
@@ -180,11 +198,81 @@ export interface LeadEvent {
   id: string
   lead_id: string
   organization_id: string
-  type: 'stage_change' | 'score_update' | 'message_sent' | 'message_received' | 'tag_added' | 'tag_removed' | 'note_added' | 'task_created' | 'assignment_changed'
+  type: 
+    | 'stage_change' 
+    | 'score_update' 
+    | 'message_sent' 
+    | 'message_received' 
+    | 'tag_added' 
+    | 'tag_removed' 
+    | 'note_added' 
+    | 'task_created' 
+    | 'assignment_changed'
+    | 'payment_generated'
+    | 'payment_received'
   title: string
   description?: string
   user_id?: string
   created_at: string
+}
+
+// ==========================================
+// GATEWAYS DE PAGAMENTO (Pix, Stripe, Asaas, etc)
+// ==========================================
+export type PaymentGatewayProvider = 'asaas' | 'mercadopago' | 'stripe' | 'custom_pix'
+export type PaymentStatus = 'pending' | 'paid' | 'expired' | 'failed' | 'refunded'
+export type PaymentMethod = 'pix' | 'credit_card' | 'boleto'
+
+export interface PaymentTransaction {
+  id: string
+  organization_id: string
+  lead_id: string
+  amount: number
+  status: PaymentStatus
+  method: PaymentMethod
+  provider: PaymentGatewayProvider
+  description: string
+  pix_copy_paste?: string
+  pix_qr_code_url?: string
+  checkout_url?: string
+  paid_at?: string
+  created_at: string
+}
+
+// ==========================================
+// AUTOMAÇÕES & N8N-STYLE FLOW BUILDER
+// ==========================================
+export type FlowNodeType = 
+  | 'trigger_meta_lead'
+  | 'trigger_telegram_message'
+  | 'trigger_keyword'
+  | 'trigger_pix_paid'
+  | 'trigger_webhook'
+  | 'action_telegram_text'
+  | 'action_telegram_audio'
+  | 'action_telegram_photo'
+  | 'action_telegram_video'
+  | 'action_telegram_document'
+  | 'action_generate_pix'
+  | 'action_delay'
+  | 'action_condition'
+  | 'action_change_stage'
+  | 'action_assign_agent'
+  | 'action_apply_tag'
+  | 'action_external_webhook'
+
+export interface AutomationFlow {
+  id: string
+  organization_id: string
+  name: string
+  description?: string
+  active: boolean
+  nodes: any[] // React Flow nodes
+  edges: any[] // React Flow edges
+  last_executed_at?: string
+  execution_count?: number
+  created_at: string
+  updated_at: string
 }
 
 export type AutomationTrigger = 
@@ -195,12 +283,16 @@ export type AutomationTrigger =
   | 'lead_unanswered' 
   | 'stage_changed' 
   | 'webhook_received'
+  | 'payment_received'
 
 export type AutomationAction = 
   | 'apply_tag' 
   | 'change_stage' 
   | 'assign_agent' 
   | 'send_telegram_message' 
+  | 'send_telegram_audio'
+  | 'send_telegram_media'
+  | 'generate_pix'
   | 'create_task' 
   | 'call_external_webhook'
 

@@ -9,7 +9,8 @@ import {
   Conversation, 
   Message, 
   Bot,
-  Automation
+  Automation,
+  PaymentTransaction
 } from '@/types'
 
 export const mockOrganizations: Organization[] = [
@@ -329,6 +330,22 @@ export const mockConversations: Conversation[] = [
     unread_count: 0,
     created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
     updated_at: new Date().toISOString()
+  },
+  {
+    id: 'conv-4',
+    organization_id: 'org-agency-alpha',
+    bot_id: 'bot-1',
+    bot: mockBots[0],
+    lead_id: 'lead-2',
+    lead: mockLeads[1],
+    status: 'in_human_service',
+    assigned_to: 'user-2',
+    assigned_user: mockUsers[1],
+    last_message: 'Cobrança Pix gerada com sucesso: R$ 15.000,00',
+    last_message_at: new Date(Date.now() - 45 * 60000).toISOString(),
+    unread_count: 0,
+    created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+    updated_at: new Date().toISOString()
   }
 ]
 
@@ -366,12 +383,26 @@ export const mockMessages: Record<string, Message[]> = {
       conversation_id: 'conv-1',
       lead_id: 'lead-1',
       sender_type: 'agent',
-      message_type: 'text',
-      text: 'Fala Rodrigo, Guilherme aqui! Vi seus dados e o volume de vocês. Com a nossa solução o lead cai no CRM em menos de 1 segundo após clicar no anúncio e clicar no Start.',
-      created_at: new Date(Date.now() - 30 * 60000).toISOString()
+      message_type: 'audio',
+      text: 'Áudio gravado pelo atendente',
+      media_duration: 38,
+      media_url: 'https://example.com/audio/voice-note-1.mp3',
+      caption: 'Explicação detalhada da infraestrutura de webhooks e distribuição',
+      created_at: new Date(Date.now() - 40 * 60000).toISOString()
     },
     {
       id: 'msg-5',
+      conversation_id: 'conv-1',
+      lead_id: 'lead-1',
+      sender_type: 'agent',
+      message_type: 'photo',
+      text: 'Demonstração do dashboard de conversão',
+      media_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&auto=format&fit=crop&q=80',
+      caption: 'Aqui está como os leads caem com UTM completa em tempo real!',
+      created_at: new Date(Date.now() - 35 * 60000).toISOString()
+    },
+    {
+      id: 'msg-6',
       conversation_id: 'conv-1',
       lead_id: 'lead-1',
       sender_type: 'lead',
@@ -380,13 +411,80 @@ export const mockMessages: Record<string, Message[]> = {
       created_at: new Date(Date.now() - 20 * 60000).toISOString()
     },
     {
-      id: 'msg-6',
+      id: 'msg-7',
       conversation_id: 'conv-1',
       lead_id: 'lead-1',
       sender_type: 'agent',
       message_type: 'text',
       text: 'Excelente Rodrigo, agendei a apresentação para amanhã às 15h.',
       created_at: new Date(Date.now() - 12 * 60000).toISOString()
+    }
+  ],
+  'conv-2': [
+    {
+      id: 'msg-201',
+      conversation_id: 'conv-2',
+      lead_id: 'lead-3',
+      sender_type: 'bot',
+      message_type: 'text',
+      text: 'Olá Mateus! Bem-vindo. Vi que você veio da campanha Black Scale. Como podemos ajudar?',
+      created_at: new Date(Date.now() - 10 * 60000).toISOString()
+    },
+    {
+      id: 'msg-202',
+      conversation_id: 'conv-2',
+      lead_id: 'lead-3',
+      sender_type: 'lead',
+      message_type: 'text',
+      text: 'Gostaria de saber o valor para um plano corporativo.',
+      created_at: new Date(Date.now() - 3 * 60000).toISOString()
+    }
+  ],
+  'conv-4': [
+    {
+      id: 'msg-401',
+      conversation_id: 'conv-4',
+      lead_id: 'lead-2',
+      sender_type: 'agent',
+      message_type: 'document',
+      media_name: 'Proposta_Comercial_GrowthScale_v2.pdf',
+      caption: 'Segue em anexo o escopo de automação de lançamento + bot.',
+      created_at: new Date(Date.now() - 60 * 60000).toISOString()
+    },
+    {
+      id: 'msg-402',
+      conversation_id: 'conv-4',
+      lead_id: 'lead-2',
+      sender_type: 'lead',
+      message_type: 'text',
+      text: 'Perfeito Beatriz! Pode gerar a chave Pix com o desconto à vista de 10%?',
+      created_at: new Date(Date.now() - 50 * 60000).toISOString()
+    },
+    {
+      id: 'msg-403',
+      conversation_id: 'conv-4',
+      lead_id: 'lead-2',
+      sender_type: 'agent',
+      message_type: 'payment_request',
+      text: 'Cobrança Pix gerada com sucesso: R$ 15.000,00',
+      payment: {
+        id: 'pay-001',
+        organization_id: 'org-agency-alpha',
+        lead_id: 'lead-2',
+        amount: 15000,
+        status: 'pending',
+        method: 'pix',
+        provider: 'asaas',
+        description: 'Implementação de Tráfego & Bot Telegram - Contrato Semestral',
+        pix_copy_paste: '00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-426614174000520400005303986540515000.005802BR5925GrowthScale Agencia6009Sao Paulo62070503***6304E2CA',
+        checkout_url: 'https://checkout.growthscale.com.br/pay/001',
+        created_at: new Date(Date.now() - 45 * 60000).toISOString()
+      },
+      buttons: [
+        { text: '🔑 Copiar Código Pix Copia e Cola', callback_data: 'copy_pix' },
+        { text: '💳 Pagar com Cartão de Crédito', url: 'https://checkout.growthscale.com.br/pay/001' }
+      ],
+      created_at: new Date(Date.now() - 45 * 60000).toISOString()
     }
   ]
 }

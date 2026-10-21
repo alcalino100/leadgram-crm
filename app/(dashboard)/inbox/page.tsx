@@ -1,21 +1,29 @@
 'use client'
 
-import { PagePlaceholder } from '@/components/shell/page-placeholder'
+import * as React from 'react'
+import { InboxShell } from '@/components/inbox/inbox-shell'
+import { Badge } from '@/components/ui/badge'
 
 export default function InboxPage() {
   return (
-    <PagePlaceholder
-      title="Inbox Telegram & Atendimento Humano"
-      description="Interface em 3 colunas para acompanhamento das conversas do bot, intervenção humana em tempo real e visualização de contexto do lead."
-      promptStep="Prompt 3"
-      features={[
-        'Layout 3 colunas: Lista de conversas, Chat timeline e Contexto do lead',
-        'Alternância entre bot ativo e atendimento humano com 1 clique',
-        'Suporte a texto, fotos, vídeos, áudios e documentos do Telegram',
-        'Filtros por status, bot, responsável e leads quentes',
-        'Painel lateral com dados do lead, score, UTMs da campanha e notas',
-        'Arquitetura preparada para Supabase Realtime'
-      ]}
-    />
+    <div className="space-y-4">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1 border-b border-zinc-800/80">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-zinc-100">Inbox Telegram</h1>
+            <Badge variant="outline" className="font-mono-code text-[10px] text-cyan-400 border-cyan-500/30">
+              Live Webhook
+            </Badge>
+          </div>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Central de atendimento unificada: alterne entre o Bot IA e seus consultores comerciais em tempo real
+          </p>
+        </div>
+      </div>
+
+      {/* 3-Column Inbox Interface */}
+      <InboxShell />
+    </div>
   )
 }
