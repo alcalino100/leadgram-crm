@@ -43,17 +43,55 @@ import {
   DelayNode,
   ConditionNode,
   CrmActionNode,
+  DefaultFallbackNode,
 } from '@/components/automations/custom-nodes'
 
 const nodeTypes = {
+  // Triggers
   triggerNode: TriggerNode,
+  trigger: TriggerNode,
+
+  // Text / Message
   textNode: TextActionNode,
+  messageNode: TextActionNode,
+  text: TextActionNode,
+  message: TextActionNode,
+
+  // Audio / Voice
   audioNode: AudioActionNode,
+  audio: AudioActionNode,
+  voiceNode: AudioActionNode,
+
+  // Media (Photo / Video / Teaser)
   mediaNode: MediaActionNode,
+  media: MediaActionNode,
+  photoNode: MediaActionNode,
+  videoNode: MediaActionNode,
+
+  // Payment / Pix Firebot
   paymentNode: PaymentActionNode,
+  firebotPixNode: PaymentActionNode,
+  pixNode: PaymentActionNode,
+  payment: PaymentActionNode,
+
+  // Delay
   delayNode: DelayNode,
+  delay: DelayNode,
+
+  // Condition
   conditionNode: ConditionNode,
+  condition: ConditionNode,
+
+  // CRM Action
   crmNode: CrmActionNode,
+  actionNode: CrmActionNode,
+  crm: CrmActionNode,
+  action: CrmActionNode,
+
+  // Fallbacks
+  default: DefaultFallbackNode,
+  input: TriggerNode,
+  output: CrmActionNode,
 }
 
 const initialNodes: Node[] = [

@@ -57,3 +57,28 @@ body {
 .font-mono-code {
   font-family: var(--font-jetbrains-mono), monospace;
 }
+
+
+/* React Flow Dark Mode Overrides */
+.react-flow__node-default,
+.react-flow__node-input,
+.react-flow__node-output,
+.react-flow__node {
+  background-color: #09090b !important;
+  border-color: #27272a !important;
+  color: #f4f4f5 !important;
+}
+
+.react-flow__node-default {
+  background: #09090b !important;
+  border: 1px solid #3f3f46 !important;
+  color: #f4f4f5 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem 1rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.7) !important;
+}
+
+.react-flow__handle {
+  background: #ec4899 !important;
+  border: 2px solid #09090b !important;
+}
