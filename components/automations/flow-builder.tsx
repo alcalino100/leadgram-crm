@@ -135,30 +135,64 @@ const initialEdges: Edge[] = [
   { id: 'e6-7', source: 'node-6', target: 'node-7', style: { stroke: '#22d3ee', strokeWidth: 2 } },
 ]
 
-export function AutomationFlowBuilder() {
-  const [nodes, setNodes] = React.useState<Node[]>(initialNodes)
-  const [edges, setEdges] = React.useState<Edge[]>(initialEdges)
+interface AutomationFlowBuilderProps {
+  initialNodes?: Node[]
+  initialEdges?: Edge[]
+  onNodesEdgesChange?: (nodes: Node[], edges: Edge[]) => void
+}
+
+export function AutomationFlowBuilder({
+  initialNodes: propNodes,
+  initialEdges: propEdges,
+  onNodesEdgesChange,
+}: AutomationFlowBuilderProps = {}) {
+  const [nodes, setNodes] = React.useState<Node[]>(propNodes || initialNodes)
+  const [edges, setEdges] = React.useState<Edge[]>(propEdges || initialEdges)
   const [isSaved, setIsSaved] = React.useState(false)
 
+  // Atualizar quando props mudarem
+  React.useEffect(() => {
+    if (propNodes) setNodes(propNodes)
+  }, [propNodes])
+
+  React.useEffect(() => {
+    if (propEdges) setEdges(propEdges)
+  }, [propEdges])
+
   const onNodesChange = React.useCallback(
-    (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    []
+    (changes: any) => {
+      setNodes((nds) => {
+        const next = applyNodeChanges(changes, nds)
+        onNodesEdgesChange?.(next, edges)
+        return next
+      })
+    },
+    [edges, onNodesEdgesChange]
   )
 
   const onEdgesChange = React.useCallback(
-    (changes: any) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
+    (changes: any) => {
+      setEdges((eds) => {
+        const next = applyEdgeChanges(changes, eds)
+        onNodesEdgesChange?.(nodes, next)
+        return next
+      })
+    },
+    [nodes, onNodesEdgesChange]
   )
 
   const onConnect = React.useCallback(
-    (params: Connection) =>
-      setEdges((eds) =>
-        addEdge(
-          { ...params, animated: true, style: { stroke: '#22d3ee', strokeWidth: 2 } },
+    (params: Connection) => {
+      setEdges((eds) => {
+        const next = addEdge(
+          { ...params, animated: true, style: { stroke: '#ec4899', strokeWidth: 2 } },
           eds
         )
-      ),
-    []
+        onNodesEdgesChange?.(nodes, next)
+        return next
+      })
+    },
+    [nodes, onNodesEdgesChange]
   )
 
   const addCustomNode = (type: string, defaultData: any) => {

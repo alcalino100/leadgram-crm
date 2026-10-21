@@ -36,7 +36,7 @@ import { LeadStageId } from '@/types'
 
 export function LeadsTable() {
   const router = useRouter()
-  const { leads, openLeadDrawer, updateLeadStage, assignLead } = useAppStore()
+  const { leads, pipelineStages, users, openLeadDrawer, updateLeadStage, assignLead, deleteLead } = useAppStore()
 
   const [search, setSearch] = React.useState('')
   const [selectedSource, setSelectedSource] = React.useState<string>('all')
@@ -58,7 +58,7 @@ export function LeadsTable() {
       lead.name.toLowerCase().includes(searchLower) ||
       (lead.phone && lead.phone.toLowerCase().includes(searchLower)) ||
       (lead.telegram_username && lead.telegram_username.toLowerCase().includes(searchLower)) ||
-      (lead.telegram_chat_id && lead.telegram_chat_id.includes(searchLower))
+      (lead.telegram_chat_id && String(lead.telegram_chat_id).includes(searchLower))
 
     const matchesSource = selectedSource === 'all' || lead.source_id === selectedSource
     const matchesStage = selectedStage === 'all' || lead.stage === selectedStage
@@ -135,10 +135,10 @@ export function LeadsTable() {
         <select
           value={selectedStage}
           onChange={(e) => setSelectedStage(e.target.value)}
-          className="h-7 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+          className="h-7 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 px-2 focus:outline-none focus:ring-1 focus:ring-pink-500"
         >
           <option value="all">Todos os Estágios</option>
-          {mockPipelineStages.map((st) => (
+          {pipelineStages.map((st) => (
             <option key={st.id} value={st.id}>
               {st.name}
             </option>
@@ -149,10 +149,10 @@ export function LeadsTable() {
         <select
           value={selectedUser}
           onChange={(e) => setSelectedUser(e.target.value)}
-          className="h-7 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+          className="h-7 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 px-2 focus:outline-none focus:ring-1 focus:ring-pink-500"
         >
-          <option value="all">Todos os Responsáveis</option>
-          {mockUsers.map((u) => (
+          <option value="all">Todos os Atendentes</option>
+          {users.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name}
             </option>
@@ -267,7 +267,7 @@ export function LeadsTable() {
                         }}
                         className="h-7 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500 capitalize"
                       >
-                        {mockPipelineStages.map((st) => (
+                        {pipelineStages.map((st) => (
                           <option key={st.id} value={st.id}>
                             {st.name}
                           </option>
@@ -311,7 +311,7 @@ export function LeadsTable() {
                         className="h-7 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-300 px-2 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                       >
                         <option value="">Não atribuído</option>
-                        {mockUsers.map((u) => (
+                        {users.map((u) => (
                           <option key={u.id} value={u.id}>
                             {u.name}
                           </option>

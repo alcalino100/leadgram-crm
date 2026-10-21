@@ -77,7 +77,7 @@ export function NewLeadDialog({ trigger }: NewLeadDialogProps) {
         cleanUsername = `@${cleanUsername}`
       }
 
-      const created = addLead({
+      const created = await addLead({
         organization_id: currentOrganization?.id || 'org-agency-alpha',
         name: data.name,
         phone: data.phone || undefined,

@@ -52,11 +52,13 @@ export type LeadStageId =
   | 'follow_up'
   | 'ganho'
   | 'perdido'
+  | string
 
 export interface PipelineStage {
-  id: LeadStageId
+  id: string
   name: string
-  order: number
+  order?: number
+  sort_order?: number
   color: string
 }
 
@@ -84,7 +86,7 @@ export interface Lead {
   name: string
   phone?: string
   email?: string
-  telegram_chat_id?: string
+  telegram_chat_id?: string | number
   telegram_username?: string
   source_id?: string
   source?: LeadSource
@@ -96,6 +98,11 @@ export interface Lead {
   assigned_to?: string
   assigned_user?: User
   estimated_value?: number
+  utm_source?: string
+  utm_medium?: string
+  utm_campaign?: string
+  utm_content?: string
+  utm_term?: string
   utms?: UTMParams
   tags?: Tag[]
   notes?: string
@@ -153,6 +160,7 @@ export type MessageType =
   | 'document' 
   | 'location'
   | 'payment_request'
+  | 'payment_pix'
 
 export type MessageSender = 'lead' | 'bot' | 'agent'
 

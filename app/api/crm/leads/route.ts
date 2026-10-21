@@ -59,3 +59,54 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
+export async function PUT(req: NextRequest) {
+  try {
+    const supabase = createAdminClient()
+    const body = await req.json()
+    const { id, ...updates } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID do lead é obrigatório' }, { status: 400 })
+    }
+
+    updates.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabase
+      .from('leads')
+      .update(updates)
+      .eq('id', id)
+      .select('*, pipeline_stages(*)')
+      .single()
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, lead: data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const supabase = createAdminClient()
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID do lead é obrigatório' }, { status: 400 })
+    }
+
+    const { error } = await supabase.from('leads').delete().eq('id', id)
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, deleted_id: id })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
