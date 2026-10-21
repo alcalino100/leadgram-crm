@@ -45,6 +45,7 @@ import {
   CrmActionNode,
   DefaultFallbackNode,
 } from '@/components/automations/custom-nodes'
+import { NodeConfigDrawer } from '@/components/automations/node-config-drawer'
 
 const nodeTypes = {
   // Triggers
@@ -100,77 +101,70 @@ const initialNodes: Node[] = [
     type: 'triggerNode',
     position: { x: 50, y: 150 },
     data: {
-      label: 'Novo Lead Meta Ads',
-      description: 'Dispara quando o lead clica no anúncio e inicia a conversa no Telegram.',
-      badge: 'utm_source = meta',
+      label: 'Novo Lead Ads Meta/Google',
+      description: 'Dispara quando o lead clica no anúncio e inicia o bot Telegram.',
+      badge: 'utm_source = meta_ads',
     },
   },
   {
     id: 'node-2',
     type: 'textNode',
-    position: { x: 360, y: 150 },
+    position: { x: 380, y: 150 },
     data: {
       title: 'Boas-Vindas Imediata',
-      message: 'Olá {{lead.nome}}! Seja muito bem-vindo. Recebemos seu interesse na campanha de escala.',
-      hasButtons: true,
+      message: 'Oi amor! Seja bem-vindo ao meu canal exclusivo 🔥 Estava esperando você!',
     },
   },
   {
     id: 'node-3',
     type: 'delayNode',
-    position: { x: 680, y: 150 },
+    position: { x: 700, y: 150 },
     data: {
       delay: '2 minutos',
+      duration: 2,
+      unit: 'minutes',
     },
   },
   {
     id: 'node-4',
     type: 'audioNode',
-    position: { x: 970, y: 150 },
+    position: { x: 980, y: 150 },
     data: {
-      title: 'Áudio Consultor Sênior',
-      duration: '0:42s',
-      description: 'Áudio gravado pelo Guilherme explicando a estrutura de atendimento.',
+      title: 'Áudio Sussurrado VIP',
+      duration: '0:22',
+      caption: 'Oi meu bem... preparei algo bem especial só pra você hoje ❤️',
     },
   },
   {
     id: 'node-5',
-    type: 'conditionNode',
-    position: { x: 1300, y: 120 },
+    type: 'paymentNode',
+    position: { x: 1300, y: 150 },
     data: {
-      title: 'Demonstrou Interesse?',
-      conditionText: 'Contém: "Sim", "Quero", "Como funciona"',
+      title: 'Acesso VIP Firebot',
+      description: 'Plano VIP Vitalício + Pack Bônus',
+      amount: 49.9,
+      instructions: 'Pague o PIX Copia e Cola para liberação automática do canal VIP.',
     },
   },
   {
     id: 'node-6',
-    type: 'paymentNode',
-    position: { x: 1650, y: 80 },
-    data: {
-      title: 'Setup Inicial Pix',
-      amount: '2.500,00',
-      provider: 'Asaas Pix Instantâneo',
-    },
-  },
-  {
-    id: 'node-7',
     type: 'crmNode',
-    position: { x: 1980, y: 80 },
+    position: { x: 1650, y: 150 },
     data: {
-      action: 'Mover para Qualificado',
-      details: 'Estágio → Qualificado',
-      tag: 'Lead VIP',
+      action: 'Mover para VIP Ativo',
+      label: 'Mover para VIP Ativo',
+      details: 'Estágio → Ganho/VIP Ativo',
+      tag: 'Assinante VIP',
     },
   },
 ]
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#22d3ee', strokeWidth: 2 } },
+  { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#ec4899', strokeWidth: 2 } },
   { id: 'e2-3', source: 'node-2', target: 'node-3', style: { stroke: '#3b82f6', strokeWidth: 2 } },
   { id: 'e3-4', source: 'node-3', target: 'node-4', style: { stroke: '#f59e0b', strokeWidth: 2 } },
-  { id: 'e4-5', source: 'node-4', target: 'node-5', style: { stroke: '#10b981', strokeWidth: 2 } },
-  { id: 'e5-6', source: 'node-5', sourceHandle: 'true', target: 'node-6', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
-  { id: 'e6-7', source: 'node-6', target: 'node-7', style: { stroke: '#22d3ee', strokeWidth: 2 } },
+  { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
+  { id: 'e5-6', source: 'node-5', target: 'node-6', style: { stroke: '#ec4899', strokeWidth: 2 } },
 ]
 
 interface AutomationFlowBuilderProps {
@@ -186,7 +180,13 @@ export function AutomationFlowBuilder({
 }: AutomationFlowBuilderProps = {}) {
   const [nodes, setNodes] = React.useState<Node[]>(propNodes || initialNodes)
   const [edges, setEdges] = React.useState<Edge[]>(propEdges || initialEdges)
+  const [selectedNodeId, setSelectedNodeId] = React.useState<string | null>(null)
   const [isSaved, setIsSaved] = React.useState(false)
+
+  // Bloco selecionado reativo
+  const selectedNode = React.useMemo(() => {
+    return nodes.find((n) => n.id === selectedNodeId) || null
+  }, [nodes, selectedNodeId])
 
   // Atualizar quando props mudarem
   React.useEffect(() => {
@@ -233,29 +233,100 @@ export function AutomationFlowBuilder({
     [nodes, onNodesEdgesChange]
   )
 
+  // Atualizar dados do nó selecionado no Sharkbot Drawer
+  const updateNodeData = React.useCallback(
+    (nodeId: string, patch: Record<string, any>) => {
+      setNodes((nds) => {
+        const next = nds.map((n) => {
+          if (n.id === nodeId) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                ...patch,
+              },
+            }
+          }
+          return n
+        })
+        onNodesEdgesChange?.(next, edges)
+        return next
+      })
+    },
+    [edges, onNodesEdgesChange]
+  )
+
+  // Excluir nó
+  const deleteNode = React.useCallback(
+    (nodeId: string) => {
+      setNodes((nds) => {
+        const nextNodes = nds.filter((n) => n.id !== nodeId)
+        setEdges((eds) => {
+          const nextEdges = eds.filter((e) => e.source !== nodeId && e.target !== nodeId)
+          onNodesEdgesChange?.(nextNodes, nextEdges)
+          return nextEdges
+        })
+        return nextNodes
+      })
+      setSelectedNodeId(null)
+      toast.success('Bloco removido com sucesso!')
+    },
+    [onNodesEdgesChange]
+  )
+
+  // Duplicar nó
+  const duplicateNode = React.useCallback(
+    (nodeToDuplicate: Node) => {
+      const newId = `node-${Date.now()}`
+      const newNode: Node = {
+        ...nodeToDuplicate,
+        id: newId,
+        position: {
+          x: (nodeToDuplicate.position?.x || 100) + 40,
+          y: (nodeToDuplicate.position?.y || 100) + 40,
+        },
+        data: { ...nodeToDuplicate.data },
+      }
+      setNodes((nds) => {
+        const next = [...nds, newNode]
+        onNodesEdgesChange?.(next, edges)
+        return next
+      })
+      setSelectedNodeId(newId)
+      toast.success('Bloco duplicado com sucesso!')
+    },
+    [edges, onNodesEdgesChange]
+  )
+
   const addCustomNode = (type: string, defaultData: any) => {
     const id = `node-${Date.now()}`
     const newNode: Node = {
       id,
       type,
-      position: { x: 300 + Math.random() * 200, y: 300 + Math.random() * 100 },
+      position: { x: 340 + Math.random() * 120, y: 180 + Math.random() * 100 },
       data: defaultData,
     }
-    setNodes((nds) => [...nds, newNode])
-    toast.success('Novo bloco adicionado ao fluxo!')
+    setNodes((nds) => {
+      const next = [...nds, newNode]
+      onNodesEdgesChange?.(next, edges)
+      return next
+    })
+    setSelectedNodeId(id)
+    toast.success('Novo bloco adicionado! Configure os detalhes no painel lateral.')
   }
 
   const handleSave = () => {
     setIsSaved(true)
+    onNodesEdgesChange?.(nodes, edges)
     toast.success('Fluxo de automação salvo com sucesso!', {
-      description: 'As alterações foram sincronizadas e publicadas no bot Telegram.',
+      description: 'As alterações foram sincronizadas com o banco de dados.',
     })
     setTimeout(() => setIsSaved(false), 2000)
   }
 
   const handleTestFlow = () => {
     toast.info('Simulação disparada!', {
-      description: 'Uma mensagem de teste foi enviada para o bot Telegram conectado.',
+      description: 'O fluxo foi executado para simulação no bot Telegram.',
     })
   }
 
@@ -272,7 +343,7 @@ export function AutomationFlowBuilder({
           </div>
           <span className="hidden sm:inline-block text-xs text-zinc-500">|</span>
           <span className="hidden sm:inline-block text-xs text-zinc-400">
-            Estilo N8N / Node Workflow Engine
+            Estilo N8N / Sharkbot Flow Builder
           </span>
         </div>
 
@@ -281,16 +352,16 @@ export function AutomationFlowBuilder({
             size="sm"
             variant="outline"
             onClick={handleTestFlow}
-            className="text-xs h-8 gap-1.5 border-zinc-800 hover:border-cyan-500/40"
+            className="text-xs h-8 gap-1.5 border-zinc-800 hover:border-pink-500/40 text-zinc-300"
           >
-            <Play className="h-3.5 w-3.5 text-cyan-400" />
+            <Play className="h-3.5 w-3.5 text-pink-400" />
             <span>Testar no Bot</span>
           </Button>
 
           <Button
             size="sm"
             onClick={handleSave}
-            className="bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-xs h-8 gap-1.5"
+            className="bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs h-8 gap-1.5 shadow-md shadow-pink-600/20"
           >
             {isSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
             <span>{isSaved ? 'Salvo!' : 'Salvar Automação'}</span>
@@ -298,7 +369,7 @@ export function AutomationFlowBuilder({
         </div>
       </div>
 
-      {/* Main Builder Canvas + Nodes Palette */}
+      {/* Main Builder Canvas + Nodes Palette + Config Drawer */}
       <div className="flex-1 flex relative overflow-hidden">
         {/* ReactFlow Canvas */}
         <div className="flex-1 h-full w-full bg-zinc-950">
@@ -308,6 +379,8 @@ export function AutomationFlowBuilder({
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={(_event, node) => setSelectedNodeId(node.id)}
+            onPaneClick={() => setSelectedNodeId(null)}
             nodeTypes={nodeTypes}
             fitView
             className="bg-zinc-950"
@@ -326,9 +399,9 @@ export function AutomationFlowBuilder({
         <div className="absolute top-4 left-4 z-10 w-64 rounded-xl border border-zinc-800/90 bg-zinc-950/90 backdrop-blur-md p-3 shadow-2xl space-y-3">
           <div className="flex items-center justify-between pb-1.5 border-b border-zinc-800">
             <span className="text-[11px] font-bold uppercase text-zinc-300 flex items-center gap-1.5">
-              <Plus className="h-3.5 w-3.5 text-cyan-400" /> Adicionar Bloco
+              <Plus className="h-3.5 w-3.5 text-pink-400" /> Adicionar Bloco
             </span>
-            <span className="text-[9px] font-mono-code text-zinc-400">n8n style</span>
+            <span className="text-[9px] font-mono-code text-zinc-400">Sharkbot style</span>
           </div>
 
           <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
@@ -336,7 +409,7 @@ export function AutomationFlowBuilder({
               onClick={() =>
                 addCustomNode('textNode', {
                   title: 'Mensagem de Texto',
-                  message: 'Olá {{lead.nome}}, como podemos ajudar?',
+                  message: 'Oi amor! Seja bem-vindo ao meu canal VIP 🔥 Quer ver meus conteúdos exclusivos?',
                 })
               }
               className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-blue-500/40 text-left text-xs transition-colors flex items-center gap-2"
@@ -351,14 +424,14 @@ export function AutomationFlowBuilder({
             <button
               onClick={() =>
                 addCustomNode('audioNode', {
-                  title: 'Áudio Gravado',
-                  duration: '0:35s',
-                  description: 'Mensagem de áudio com gravação realista',
+                  title: 'Áudio Sussurrado',
+                  duration: '0:22',
+                  caption: 'Oi meu bem... preparei algo bem especial só pra você hoje ❤️',
                 })
               }
-              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-emerald-500/40 text-left text-xs transition-colors flex items-center gap-2"
+              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 text-left text-xs transition-colors flex items-center gap-2"
             >
-              <Mic className="h-4 w-4 text-emerald-400 shrink-0" />
+              <Mic className="h-4 w-4 text-amber-400 shrink-0" />
               <div>
                 <p className="font-semibold text-zinc-200">Áudio de Voz</p>
                 <p className="text-[10px] text-zinc-400">Simula áudio gravado no app</p>
@@ -368,34 +441,35 @@ export function AutomationFlowBuilder({
             <button
               onClick={() =>
                 addCustomNode('mediaNode', {
-                  title: 'Foto Criativo',
+                  title: 'Foto Teaser VIP',
                   mediaType: 'photo',
-                  caption: 'Confira nossos cases de sucesso!',
+                  caption: 'Olha o que acabou de sair no VIP... clica abaixo para desbloquear 🔥',
                 })
               }
-              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-purple-500/40 text-left text-xs transition-colors flex items-center gap-2"
+              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-pink-500/40 text-left text-xs transition-colors flex items-center gap-2"
             >
-              <ImageIcon className="h-4 w-4 text-purple-400 shrink-0" />
+              <ImageIcon className="h-4 w-4 text-pink-400 shrink-0" />
               <div>
-                <p className="font-semibold text-zinc-200">Foto / Carrossel</p>
-                <p className="text-[10px] text-zinc-400">Imagens com legenda e link</p>
+                <p className="font-semibold text-zinc-200">Foto / Teaser</p>
+                <p className="text-[10px] text-zinc-400">Prévia com blur ou censura</p>
               </div>
             </button>
 
             <button
               onClick={() =>
                 addCustomNode('paymentNode', {
-                  title: 'Cobrança Pix Instantânea',
-                  amount: '1.200,00',
-                  provider: 'Asaas / Mercado Pago',
+                  title: 'Acesso VIP Firebot',
+                  amount: 49.9,
+                  description: 'Acesso Canal VIP Mensal',
+                  instructions: 'Copie o código PIX e pague no app do banco para liberar imediatamente!',
                 })
               }
               className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-emerald-500/40 text-left text-xs transition-colors flex items-center gap-2"
             >
               <QrCode className="h-4 w-4 text-emerald-400 shrink-0" />
               <div>
-                <p className="font-semibold text-zinc-200">Gerar Cobrança Pix</p>
-                <p className="text-[10px] text-zinc-400">Chave Copia e Cola + QR Code</p>
+                <p className="font-semibold text-zinc-200">Gerar PIX Firebot</p>
+                <p className="text-[10px] text-zinc-400">QR Code + Copia e Cola automático</p>
               </div>
             </button>
 
@@ -403,6 +477,8 @@ export function AutomationFlowBuilder({
               onClick={() =>
                 addCustomNode('delayNode', {
                   delay: '5 minutos',
+                  duration: 5,
+                  unit: 'minutes',
                 })
               }
               className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-amber-500/40 text-left text-xs transition-colors flex items-center gap-2"
@@ -410,20 +486,20 @@ export function AutomationFlowBuilder({
               <Clock className="h-4 w-4 text-amber-400 shrink-0" />
               <div>
                 <p className="font-semibold text-zinc-200">Delay / Espera</p>
-                <p className="text-[10px] text-zinc-400">Aguarda minutos ou horas</p>
+                <p className="text-[10px] text-zinc-400">Aguarda minutos antes do próximo envio</p>
               </div>
             </button>
 
             <button
               onClick={() =>
                 addCustomNode('conditionNode', {
-                  title: 'Se respondeu "Sim"',
-                  conditionText: 'Verifica intenção de compra',
+                  title: 'Se respondeu "Quero"',
+                  conditionText: 'Contém: Quero, Sim, VIP, Manda',
                 })
               }
-              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-rose-500/40 text-left text-xs transition-colors flex items-center gap-2"
+              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-purple-500/40 text-left text-xs transition-colors flex items-center gap-2"
             >
-              <GitBranch className="h-4 w-4 text-rose-400 shrink-0" />
+              <GitBranch className="h-4 w-4 text-purple-400 shrink-0" />
               <div>
                 <p className="font-semibold text-zinc-200">Condição (If / Else)</p>
                 <p className="text-[10px] text-zinc-400">Ramifica o atendimento</p>
@@ -434,13 +510,14 @@ export function AutomationFlowBuilder({
               onClick={() =>
                 addCustomNode('crmNode', {
                   action: 'Mover Estágio',
-                  details: 'Estágio → Proposta Enviada',
-                  tag: 'Interesse Alto',
+                  label: 'Mover para VIP Ativo',
+                  details: 'Estágio → Ganho/VIP Ativo',
+                  tag: 'Assinante VIP',
                 })
               }
-              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-cyan-500/40 text-left text-xs transition-colors flex items-center gap-2"
+              className="w-full p-2 rounded-lg bg-zinc-900/60 hover:bg-zinc-900 border border-zinc-800 hover:border-pink-500/40 text-left text-xs transition-colors flex items-center gap-2"
             >
-              <TagIcon className="h-4 w-4 text-cyan-400 shrink-0" />
+              <TagIcon className="h-4 w-4 text-pink-400 shrink-0" />
               <div>
                 <p className="font-semibold text-zinc-200">Ação CRM</p>
                 <p className="text-[10px] text-zinc-400">Altera funil ou aplica tag</p>
@@ -448,6 +525,15 @@ export function AutomationFlowBuilder({
             </button>
           </div>
         </div>
+
+        {/* Sharkbot Style Node Configuration Drawer on the Right */}
+        <NodeConfigDrawer
+          node={selectedNode}
+          onClose={() => setSelectedNodeId(null)}
+          onUpdateData={updateNodeData}
+          onDeleteNode={deleteNode}
+          onDuplicateNode={duplicateNode}
+        />
       </div>
     </div>
   )
