@@ -109,6 +109,33 @@ export function WebhooksLogs() {
         </span>
       </div>
 
+      {/* Firebot Webhook Integration Banner */}
+      <div className="rounded-xl border border-orange-500/30 bg-orange-950/20 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-orange-400">🔥 Webhook Firebot PIX (Venda Paga)</span>
+            <span className="text-[10px] font-mono-code bg-emerald-500/10 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20">Ativo</span>
+          </div>
+          <p className="text-[11px] text-zinc-300">
+            Cadastre a URL do webhook no painel da Firebot para aprovação em tempo real de transações PIX.
+          </p>
+          <code className="text-[10px] font-mono-code text-zinc-400 block pt-0.5">
+            URL: https://seu-dominio.vercel.app/api/firebot/webhook
+          </code>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            navigator.clipboard.writeText('https://seu-dominio.vercel.app/api/firebot/webhook')
+            toast.success('URL do webhook Firebot copiada!')
+          }}
+          className="text-xs h-7 shrink-0 border-orange-500/30 text-orange-300 hover:bg-orange-500/10"
+        >
+          Copiar URL do Webhook
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Table List (3 cols) */}
         <div className="lg:col-span-3 rounded-xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-xs overflow-hidden">

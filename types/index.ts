@@ -217,9 +217,9 @@ export interface LeadEvent {
 }
 
 // ==========================================
-// GATEWAYS DE PAGAMENTO (Pix, Stripe, Asaas, etc)
+// GATEWAYS DE PAGAMENTO (Firebot, Pix, Stripe, Asaas)
 // ==========================================
-export type PaymentGatewayProvider = 'asaas' | 'mercadopago' | 'stripe' | 'custom_pix'
+export type PaymentGatewayProvider = 'firebot' | 'asaas' | 'mercadopago' | 'stripe' | 'custom_pix'
 export type PaymentStatus = 'pending' | 'paid' | 'expired' | 'failed' | 'refunded'
 export type PaymentMethod = 'pix' | 'credit_card' | 'boleto'
 
@@ -232,6 +232,7 @@ export interface PaymentTransaction {
   method: PaymentMethod
   provider: PaymentGatewayProvider
   description: string
+  saleId?: string
   pix_copy_paste?: string
   pix_qr_code_url?: string
   checkout_url?: string

@@ -365,6 +365,16 @@ export function ChatTimeline({ onToggleContext }: ChatTimelineProps) {
                       <p className="text-[11px] text-zinc-400 mt-0.5">{msg.payment.description}</p>
                     </div>
 
+                    {msg.payment.pix_qr_code_url && (
+                      <div className="flex justify-center p-2 bg-white rounded-lg border border-zinc-200">
+                        <img
+                          src={msg.payment.pix_qr_code_url}
+                          alt="QR Code Pix"
+                          className="w-36 h-36 object-contain"
+                        />
+                      </div>
+                    )}
+
                     {msg.payment.pix_copy_paste && (
                       <div className="space-y-1.5">
                         <Button
