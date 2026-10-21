@@ -48,8 +48,16 @@ export function NodeConfigDrawer({
   onDeleteNode,
   onDuplicateNode,
 }: NodeConfigDrawerProps) {
+  // 1. Todos os React Hooks devem ficar sempre no topo incondicionalmente
   const { pipelineStages, availableTags } = useAppStore()
+  const [isUploading, setIsUploading] = React.useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const audioInputRef = React.useRef<HTMLInputElement>(null)
 
+  const stagesList = Array.isArray(pipelineStages) ? pipelineStages : []
+  const tagsList = Array.isArray(availableTags) ? availableTags : []
+
+  // Se nenhum nó estiver selecionado, não renderiza nada
   if (!node) return null
 
   const data: Record<string, any> = (node.data || {}) as any
@@ -59,11 +67,6 @@ export function NodeConfigDrawer({
   const handleChange = (field: string, value: any) => {
     onUpdateData(node.id, { [field]: value })
   }
-
-  // Upload direto de mídias para o Supabase Storage
-  const [isUploading, setIsUploading] = React.useState(false)
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const audioInputRef = React.useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const file = e.target.files?.[0]
@@ -806,7 +809,7 @@ export function NodeConfigDrawer({
                 value={data.value || data.stage || ''}
                 onChange={(e) => {
                   const val = e.target.value
-                  const stageObj = pipelineStages.find((s) => s.id === val)
+                  const stageObj = stagesList.find((s) => s.id === val)
                   handleChange('value', val)
                   handleChange('stage', val)
                   handleChange('details', `Estágio → ${stageObj?.name || val}`)
@@ -814,7 +817,7 @@ export function NodeConfigDrawer({
                 className="w-full h-9 rounded-md bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 px-2.5 focus:outline-none focus:ring-1 focus:ring-pink-500 capitalize"
               >
                 <option value="">Nenhuma alteração de estágio</option>
-                {pipelineStages.map((st) => (
+                {stagesList.map((st) => (
                   <option key={st.id} value={st.id}>
                     {st.name}
                   </option>
@@ -832,7 +835,7 @@ export function NodeConfigDrawer({
                 className="w-full h-9 rounded-md bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 px-2.5 focus:outline-none focus:ring-1 focus:ring-pink-500"
               >
                 <option value="">Nenhuma tag</option>
-                {availableTags.map((t) => (
+                {tagsList.map((t) => (
                   <option key={t.id} value={t.name}>
                     {t.name}
                   </option>

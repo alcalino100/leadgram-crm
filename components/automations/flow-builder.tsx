@@ -574,13 +574,15 @@ export function AutomationFlowBuilder({
         </div>
 
         {/* Sharkbot Style Node Configuration Drawer on the Right */}
-        <NodeConfigDrawer
-          node={selectedNode}
-          onClose={() => setSelectedNodeId(null)}
-          onUpdateData={updateNodeData}
-          onDeleteNode={deleteNode}
-          onDuplicateNode={duplicateNode}
-        />
+        {selectedNode && (
+          <NodeConfigDrawer
+            node={selectedNode}
+            onClose={() => setSelectedNodeId(null)}
+            onUpdateData={updateNodeData}
+            onDeleteNode={deleteNode}
+            onDuplicateNode={duplicateNode}
+          />
+        )}
       </div>
     </div>
   )
