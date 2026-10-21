@@ -18,7 +18,10 @@ import {
   DollarSign, 
   Sliders,
   Sparkles,
-  Layers
+  Layers,
+  Plus,
+  ExternalLink,
+  MousePointerClick
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -238,6 +241,170 @@ export function NodeConfigDrawer({
                 </button>
               </div>
             </div>
+
+            {/* Seção de Botões Inline Telegram (Ex: Quero 🫣😏 / Agora não) */}
+            <div className="pt-3 border-t border-zinc-800/80 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <MousePointerClick className="h-4 w-4 text-sky-400" />
+                  <span className="text-[11px] font-semibold text-zinc-200">
+                    Botões de Escolha (Telegram Inline)
+                  </span>
+                </div>
+                <Badge variant="outline" className="text-[9px] font-mono-code text-sky-400 border-sky-500/30">
+                  {(data.buttons || []).length} Botão(ões)
+                </Badge>
+              </div>
+
+              <p className="text-[10px] text-zinc-400 leading-normal">
+                Adicione botões para o lead clicar no Telegram (ex: <span className="text-zinc-200 font-semibold">"Quero 🫣😏"</span>, <span className="text-zinc-200 font-semibold">"Sim"</span>, <span className="text-zinc-200 font-semibold">"Não"</span>). Cada botão cria uma saída exclusiva no canvas!
+              </p>
+
+              {/* Modelos / Presets Rápidos com 1 Clique */}
+              <div className="p-2 rounded-lg bg-zinc-900/60 border border-zinc-800 space-y-1.5">
+                <span className="text-[9px] uppercase tracking-wider text-zinc-500 font-bold block">
+                  Modelos Rápidos (1 Clique):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleChange('template', '🤭 Sabia que você ia ficar curiosinho...\n\nPreparei alguns conteúdos especiais pra quem quer conhecer meu lado mais ousado.😏\n\nVocê quer ver???🤭👀')
+                      handleChange('buttons', [
+                        { id: 'btn_1', text: 'Quero 🫣😏', action: 'next' },
+                        { id: 'btn_2', text: 'Agora não 🤫', action: 'next' },
+                      ])
+                    }}
+                    className="px-2 py-1 rounded bg-sky-950/60 hover:bg-sky-900/80 text-sky-300 border border-sky-500/30 text-[10px] font-medium transition-colors text-left"
+                  >
+                    🔥 "Você quer ver?" (Quero / Não)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleChange('buttons', [
+                        { id: 'btn_sim', text: 'Sim, com certeza! 🔥', action: 'next' },
+                        { id: 'btn_nao', text: 'Não agora', action: 'next' },
+                      ])
+                    }}
+                    className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-medium transition-colors"
+                  >
+                    ⚡ Sim / Não
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleChange('buttons', [
+                        { id: 'btn_vip', text: 'Liberar Acesso VIP 💎', action: 'next' },
+                        { id: 'btn_duvida', text: 'Tirar Dúvidas', action: 'next' },
+                      ])
+                    }}
+                    className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-medium transition-colors"
+                  >
+                    💎 VIP / Suporte
+                  </button>
+                </div>
+              </div>
+
+              {/* Lista de Botões Cadastrados */}
+              <div className="space-y-2">
+                {(data.buttons || []).map((btn: any, index: number) => (
+                  <div
+                    key={btn.id || index}
+                    className="p-2.5 rounded-lg bg-zinc-900 border border-zinc-800 space-y-2 relative group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold font-mono-code text-sky-400">
+                        Botão #{index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextBtns = (data.buttons || []).filter((_: any, i: number) => i !== index)
+                          handleChange('buttons', nextBtns)
+                        }}
+                        className="text-zinc-500 hover:text-red-400 transition-colors p-0.5"
+                        title="Remover botão"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-400">Texto exibido no botão</label>
+                      <Input
+                        value={btn.text || ''}
+                        onChange={(e) => {
+                          const nextBtns = [...(data.buttons || [])]
+                          nextBtns[index] = { ...nextBtns[index], text: e.target.value }
+                          handleChange('buttons', nextBtns)
+                        }}
+                        placeholder="Ex: Quero 🫣😏"
+                        className="h-8 bg-zinc-950 border-zinc-700 text-xs font-semibold text-zinc-100"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div>
+                        <label className="text-[10px] text-zinc-400">Tipo de Ação</label>
+                        <select
+                          value={btn.action || 'next'}
+                          onChange={(e) => {
+                            const nextBtns = [...(data.buttons || [])]
+                            nextBtns[index] = { ...nextBtns[index], action: e.target.value }
+                            handleChange('buttons', nextBtns)
+                          }}
+                          className="w-full h-7 rounded bg-zinc-950 border border-zinc-700 text-[11px] text-zinc-300 px-2 focus:outline-none"
+                        >
+                          <option value="next">Avançar Fluxo (Canvas)</option>
+                          <option value="url">Abrir Link (URL)</option>
+                        </select>
+                      </div>
+
+                      {btn.action === 'url' ? (
+                        <div>
+                          <label className="text-[10px] text-zinc-400">Link URL</label>
+                          <Input
+                            value={btn.url || ''}
+                            onChange={(e) => {
+                              const nextBtns = [...(data.buttons || [])]
+                              nextBtns[index] = { ...nextBtns[index], url: e.target.value }
+                              handleChange('buttons', nextBtns)
+                            }}
+                            placeholder="https://t.me/..."
+                            className="h-7 bg-zinc-950 border-zinc-700 text-[11px] font-mono-code"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-[10px] text-zinc-500 pt-3">
+                          <span>Conecte a saída no canvas</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Botão Adicionar Mais Um Botão */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const current = data.buttons || []
+                    const newBtn = {
+                      id: `btn_${Date.now()}`,
+                      text: `Opção ${current.length + 1}`,
+                      action: 'next',
+                    }
+                    handleChange('buttons', [...current, newBtn])
+                  }}
+                  className="w-full h-8 text-xs border-dashed border-zinc-700 hover:border-sky-500/50 hover:bg-sky-500/10 text-sky-300 gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Adicionar Opção de Botão</span>
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -343,6 +510,77 @@ export function NodeConfigDrawer({
                 placeholder="Ex: Prévia de hoje... clica abaixo pra ver sem censura 🔥"
                 className="w-full rounded-md bg-zinc-900 border border-zinc-700 p-2 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-pink-500"
               />
+            </div>
+
+            {/* Seção de Botões Inline Telegram para Foto / Vídeo Teaser */}
+            <div className="pt-3 border-t border-zinc-800/80 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <MousePointerClick className="h-4 w-4 text-pink-400" />
+                  <span className="text-[11px] font-semibold text-zinc-200">
+                    Botões Abaixo da Mídia
+                  </span>
+                </div>
+                <Badge variant="outline" className="text-[9px] font-mono-code text-pink-400 border-pink-500/30">
+                  {(data.buttons || []).length} Botão(ões)
+                </Badge>
+              </div>
+
+              {/* Lista de Botões Cadastrados */}
+              <div className="space-y-2">
+                {(data.buttons || []).map((btn: any, index: number) => (
+                  <div
+                    key={btn.id || index}
+                    className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold font-mono-code text-pink-400">
+                        Botão #{index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextBtns = (data.buttons || []).filter((_: any, i: number) => i !== index)
+                          handleChange('buttons', nextBtns)
+                        }}
+                        className="text-zinc-500 hover:text-red-400 transition-colors p-0.5"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <Input
+                      value={btn.text || ''}
+                      onChange={(e) => {
+                        const nextBtns = [...(data.buttons || [])]
+                        nextBtns[index] = { ...nextBtns[index], text: e.target.value }
+                        handleChange('buttons', nextBtns)
+                      }}
+                      placeholder="Ex: Desbloquear VIP Completo 🔥"
+                      className="h-8 bg-zinc-950 border-zinc-700 text-xs font-semibold text-zinc-100"
+                    />
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const current = data.buttons || []
+                    const newBtn = {
+                      id: `btn_${Date.now()}`,
+                      text: `Desbloquear VIP Completo 🔥`,
+                      action: 'next',
+                    }
+                    handleChange('buttons', [...current, newBtn])
+                  }}
+                  className="w-full h-8 text-xs border-dashed border-zinc-700 hover:border-pink-500/50 hover:bg-pink-500/10 text-pink-300 gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Adicionar Botão na Mídia</span>
+                </Button>
+              </div>
             </div>
           </div>
         )}

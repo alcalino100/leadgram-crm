@@ -103,6 +103,56 @@ export function TextActionNode({ data }: { data: any }) {
         </div>
       </div>
 
+      {/* Botões Inline do Telegram (Ex: Quero 🫣😏 / Agora não) */}
+      {data.buttons && Array.isArray(data.buttons) && data.buttons.length > 0 && (
+        <div className="mt-3 pt-2.5 border-t border-zinc-800/80 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+              👇 Selecione uma opção:
+            </span>
+            <span className="text-[9px] font-mono-code text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20">
+              Inline
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            {data.buttons.map((btn: any, index: number) => {
+              const btnId = btn.id || `btn-${index}`
+              const isUrl = btn.action === 'url'
+              return (
+                <div
+                  key={btnId}
+                  className="relative group flex items-center justify-between px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-md shadow-sky-950/40 transition-all border border-sky-400/30"
+                >
+                  <span className="truncate pr-2">{btn.text || btn.label || `Opção ${index + 1}`}</span>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isUrl ? (
+                      <span className="text-[9px] font-mono-code bg-sky-700/90 px-1.5 py-0.5 rounded text-sky-200">
+                        Link ↗
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-mono-code bg-sky-700/90 px-1.5 py-0.5 rounded text-sky-200">
+                        Simulando
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Saída conectável exclusiva para o botão */}
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`btn-${btnId}`}
+                    className="!w-3 !h-3 !bg-sky-300 !border-2 !border-zinc-950 !-right-2 hover:!scale-125 transition-transform"
+                    title={`Conectar saída do botão: "${btn.text || btn.label}"`}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <Handle
         type="source"
         position={Position.Right}
@@ -209,6 +259,56 @@ export function MediaActionNode({ data }: { data: any }) {
       <div className="pt-2 text-[11px] text-zinc-400 space-y-1">
         <p className="line-clamp-2">Legenda: "{data.caption || data.message || 'Prévia do conteúdo liberado de hoje 🔥'}"</p>
       </div>
+
+      {/* Botões Inline do Telegram para Mídia Teaser */}
+      {data.buttons && Array.isArray(data.buttons) && data.buttons.length > 0 && (
+        <div className="mt-3 pt-2.5 border-t border-zinc-800/80 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+              👇 Selecione uma opção:
+            </span>
+            <span className="text-[9px] font-mono-code text-pink-400 bg-pink-500/10 px-1.5 py-0.5 rounded border border-pink-500/20">
+              Inline
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            {data.buttons.map((btn: any, index: number) => {
+              const btnId = btn.id || `btn-${index}`
+              const isUrl = btn.action === 'url'
+              return (
+                <div
+                  key={btnId}
+                  className="relative group flex items-center justify-between px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold shadow-md shadow-pink-950/40 transition-all border border-pink-400/30"
+                >
+                  <span className="truncate pr-2">{btn.text || btn.label || `Opção ${index + 1}`}</span>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isUrl ? (
+                      <span className="text-[9px] font-mono-code bg-pink-700/90 px-1.5 py-0.5 rounded text-pink-200">
+                        Link ↗
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-mono-code bg-pink-700/90 px-1.5 py-0.5 rounded text-pink-200">
+                        Simulando
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Saída conectável exclusiva para o botão */}
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`btn-${btnId}`}
+                    className="!w-3 !h-3 !bg-pink-300 !border-2 !border-zinc-950 !-right-2 hover:!scale-125 transition-transform"
+                    title={`Conectar saída do botão: "${btn.text || btn.label}"`}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <Handle
         type="source"

@@ -176,3 +176,26 @@ export async function sendDocument(
     return { ok: false, description: error.message }
   }
 }
+
+/**
+ * Responde a um clique de botão inline no Telegram (answerCallbackQuery)
+ */
+export async function answerCallbackQuery(
+  botToken: string,
+  callbackQueryId: string,
+  text?: string
+): Promise<TelegramApiResponse> {
+  try {
+    const res = await fetch(`${TELEGRAM_API_BASE}/bot${botToken}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: callbackQueryId,
+        text,
+      }),
+    })
+    return await res.json()
+  } catch (error: any) {
+    return { ok: false, description: error.message }
+  }
+}

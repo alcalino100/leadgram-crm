@@ -29,7 +29,8 @@ import {
   Play, 
   Save, 
   Check, 
-  Sparkles 
+  Sparkles,
+  MousePointerClick
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -111,8 +112,12 @@ const initialNodes: Node[] = [
     type: 'textNode',
     position: { x: 380, y: 150 },
     data: {
-      title: 'Boas-Vindas Imediata',
-      message: 'Oi amor! Seja bem-vindo ao meu canal exclusivo 🔥 Estava esperando você!',
+      title: 'Pergunta com Opções (Botões)',
+      message: '🤭 Sabia que você ia ficar curiosinho...\n\nPreparei alguns conteúdos especiais pra quem quer conhecer meu lado mais ousado.😏\n\nVocê quer ver???🤭👀',
+      buttons: [
+        { id: 'btn_1', text: 'Quero 🫣😏', action: 'next' },
+        { id: 'btn_2', text: 'Agora não 🤫', action: 'next' },
+      ],
     },
   },
   {
@@ -161,7 +166,7 @@ const initialNodes: Node[] = [
 
 const initialEdges: Edge[] = [
   { id: 'e1-2', source: 'node-1', target: 'node-2', animated: true, style: { stroke: '#ec4899', strokeWidth: 2 } },
-  { id: 'e2-3', source: 'node-2', target: 'node-3', style: { stroke: '#3b82f6', strokeWidth: 2 } },
+  { id: 'e2-3', source: 'node-2', sourceHandle: 'btn-btn_1', target: 'node-3', animated: true, style: { stroke: '#0ea5e9', strokeWidth: 2 } },
   { id: 'e3-4', source: 'node-3', target: 'node-4', style: { stroke: '#f59e0b', strokeWidth: 2 } },
   { id: 'e4-5', source: 'node-4', target: 'node-5', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
   { id: 'e5-6', source: 'node-5', target: 'node-6', style: { stroke: '#ec4899', strokeWidth: 2 } },
@@ -405,6 +410,29 @@ export function AutomationFlowBuilder({
           </div>
 
           <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
+            <button
+              onClick={() =>
+                addCustomNode('textNode', {
+                  title: 'Pergunta com Botões',
+                  message: '🤭 Sabia que você ia ficar curiosinho...\n\nPreparei alguns conteúdos especiais pra quem quer conhecer meu lado mais ousado.😏\n\nVocê quer ver???🤭👀',
+                  buttons: [
+                    { id: 'btn_1', text: 'Quero 🫣😏', action: 'next' },
+                    { id: 'btn_2', text: 'Agora não 🤫', action: 'next' },
+                  ],
+                })
+              }
+              className="w-full p-2 rounded-lg bg-sky-950/40 hover:bg-sky-900/50 border border-sky-500/40 text-left text-xs transition-colors flex items-center gap-2"
+            >
+              <MousePointerClick className="h-4 w-4 text-sky-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-zinc-100 flex items-center gap-1.5">
+                  Pergunta com Botões
+                  <span className="text-[8px] font-mono-code bg-sky-500/20 text-sky-300 px-1 rounded">Print</span>
+                </p>
+                <p className="text-[10px] text-zinc-400">Opções "Quero 🫣😏", "Sim", "Não"</p>
+              </div>
+            </button>
+
             <button
               onClick={() =>
                 addCustomNode('textNode', {

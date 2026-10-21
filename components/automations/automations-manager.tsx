@@ -67,9 +67,16 @@ export function AutomationsManager() {
           },
           {
             id: '2',
-            type: 'messageNode',
+            type: 'textNode',
             position: { x: 250, y: 200 },
-            data: { template: 'Olá amor! Bem-vindo ao meu canal exclusivo...' },
+            data: { 
+              title: 'Pergunta com Opções',
+              message: '🤭 Sabia que você ia ficar curiosinho...\n\nPreparei alguns conteúdos especiais pra quem quer conhecer meu lado mais ousado.😏\n\nVocê quer ver???🤭👀',
+              buttons: [
+                { id: 'btn_1', text: 'Quero 🫣😏', action: 'next' },
+                { id: 'btn_2', text: 'Agora não 🤫', action: 'next' },
+              ],
+            },
           },
         ],
         edges: [

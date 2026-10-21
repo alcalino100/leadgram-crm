@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendMessage } from '@/lib/telegramService'
+import { sendMessage, answerCallbackQuery } from '@/lib/telegramService'
 import { dispatchExternalWebhook } from '@/lib/webhookDispatcher'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -37,15 +37,20 @@ export async function POST(
       }
     }
 
-    // 3. Extract Message & Chat Info
-    const message = payload.message || payload.edited_message
-    if (!message) {
+    // 3. Extract Message, Callback Query (Botões Inline) & Chat Info
+    const callbackQuery = payload.callback_query
+    const isButtonClick = Boolean(callbackQuery)
+    const message = callbackQuery ? callbackQuery.message : (payload.message || payload.edited_message)
+    if (!message && !callbackQuery) {
       return NextResponse.json({ ok: true, ignored: true }, { status: 200 })
     }
 
-    const chatId = message.chat?.id
-    const from = message.from || {}
-    const text = message.text || message.caption || ''
+    const chatId = callbackQuery?.message?.chat?.id || message?.chat?.id
+    const from = callbackQuery ? callbackQuery.from : (message?.from || {})
+    const buttonData = callbackQuery?.data
+    const text = isButtonClick
+      ? (buttonData || 'Clicou no botão')
+      : (message?.text || message?.caption || '')
     const telegramUsername = from.username ? `@${from.username}` : undefined
     const leadName = [from.first_name, from.last_name].filter(Boolean).join(' ') || telegramUsername || `Lead ${chatId}`
 
@@ -68,21 +73,29 @@ export async function POST(
 
     // 5. Automated Bot Response (se configurado com TELEGRAM_BOT_TOKEN)
     const botToken = process.env.TELEGRAM_BOT_TOKEN
-    if (botToken && text.startsWith('/start')) {
-      // Boas-vindas imediata
-      await sendMessage(
-        botToken,
-        chatId,
-        `👋 Olá ${from.first_name || 'amigo(a)'}! Bem-vindo ao atendimento comercial da nossa agência.\n\nRecebemos seu contato com sucesso. Em instantes nosso time ou consultor IA dará continuidade ao seu atendimento!`
-      )
+    if (botToken) {
+      // Se clicou em botão, responder imediatamente a callback query no Telegram
+      if (callbackQuery?.id) {
+        await answerCallbackQuery(botToken, callbackQuery.id, `Opção selecionada!`)
+      }
+
+      if (text.startsWith('/start')) {
+        // Boas-vindas imediata
+        await sendMessage(
+          botToken,
+          chatId,
+          `👋 Olá ${from.first_name || 'amigo(a)'}! Bem-vindo ao atendimento comercial da nossa agência.\n\nRecebemos seu contato com sucesso. Em instantes nosso time ou consultor IA dará continuidade ao seu atendimento!`
+        )
+      }
     }
 
     // 6. Enviar cópia do evento para o Webhook Externo (webhook.site)
-    await dispatchExternalWebhook('telegram.lead_message', {
+    await dispatchExternalWebhook(isButtonClick ? 'telegram.button_click' : 'telegram.lead_message', {
       chat_id: chatId,
       lead_name: leadName,
       username: telegramUsername,
-      text,
+      text: isButtonClick ? `👉 Clicou: "${text}"` : text,
+      button_clicked: isButtonClick ? text : undefined,
       utm_source: utmSource,
       utm_campaign: utmCampaign,
       utm_content: utmContent,
