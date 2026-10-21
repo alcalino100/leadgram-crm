@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMessage } from '@/lib/telegramService'
+import { dispatchExternalWebhook } from '@/lib/webhookDispatcher'
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +31,15 @@ export async function POST(req: NextRequest) {
           `🎉 *Pagamento PIX Confirmado com Sucesso!*\n\nSeu pagamento de *${formattedAmount}* foi processado instantaneamente pela Firebot.\n\nSeu acesso e contrato já foram liberados em nosso sistema! Qualquer dúvida, nossa equipe está à disposição por aqui.`
         )
       }
+
+      // Disparar evento para o Webhook Externo (webhook.site)
+      await dispatchExternalWebhook('firebot.payment_confirmed', {
+        transactionId,
+        amount,
+        customer,
+        telegramChatId,
+        status: 'PAID',
+      })
 
       return NextResponse.json(
         {

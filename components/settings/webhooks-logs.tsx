@@ -109,6 +109,55 @@ export function WebhooksLogs() {
         </span>
       </div>
 
+      {/* Webhook.site Destination Banner */}
+      <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-cyan-400">🌐 Webhook de Integração Externa (Webhook.site)</span>
+            <span className="text-[10px] font-mono-code bg-emerald-500/10 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20">Conectado</span>
+          </div>
+          <p className="text-[11px] text-zinc-300">
+            Todos os eventos do CRM, leads do Telegram e pagamentos da Firebot são encaminhados para esta URL.
+          </p>
+          <code className="text-[10px] font-mono-code text-cyan-300 block pt-0.5">
+            https://webhook.site/2137c6fe-7a92-43c9-bdbd-8bcb8d8d33db
+          </code>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            onClick={async () => {
+              try {
+                await fetch('/api/webhooks/test', { method: 'POST' })
+                toast.success('Ping enviado para o webhook.site!', {
+                  description: 'Abra a aba do webhook.site para ver o JSON recebido ao vivo.',
+                })
+              } catch {
+                toast.error('Erro ao enviar ping')
+              }
+            }}
+            className="text-xs h-7 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold"
+          >
+            Disparar Teste
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            asChild
+            className="text-xs h-7 border-zinc-700 hover:border-zinc-500"
+          >
+            <a
+              href="https://webhook.site/#!/view/2137c6fe-7a92-43c9-bdbd-8bcb8d8d33db"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Abrir Painel
+            </a>
+          </Button>
+        </div>
+      </div>
+
       {/* Firebot Webhook Integration Banner */}
       <div className="rounded-xl border border-orange-500/30 bg-orange-950/20 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-0.5">

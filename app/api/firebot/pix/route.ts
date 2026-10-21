@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createFirebotPix } from '@/lib/firebotService'
 import { sendMessage } from '@/lib/telegramService'
+import { dispatchExternalWebhook } from '@/lib/webhookDispatcher'
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,6 +67,19 @@ _O pagamento é compensado na hora e seu acesso é liberado instantaneamente!_`
         parse_mode: 'Markdown',
       })
     }
+
+    // 3. Notificar o webhook externo configurado (webhook.site)
+    await dispatchExternalWebhook('firebot.pix_created', {
+      transactionId: firebotRes.transactionId,
+      saleId: firebotRes.saleId,
+      amount: firebotRes.amount || amount,
+      pixCopiaECola: firebotRes.pixCopiaECola,
+      customer: {
+        name: customer?.name || leadName,
+        email: customer?.email,
+      },
+      leadId,
+    })
 
     return NextResponse.json({
       success: true,

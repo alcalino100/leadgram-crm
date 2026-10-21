@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMessage } from '@/lib/telegramService'
+import { dispatchExternalWebhook } from '@/lib/webhookDispatcher'
 
 // In-memory set for idempotency check (update_id deduplication)
 const processedUpdateIds = new Set<number>()
@@ -75,7 +76,18 @@ export async function POST(
       )
     }
 
-    // 6. Fast 200 OK to Telegram (idempotent, immediate)
+    // 6. Enviar cópia do evento para o Webhook Externo (webhook.site)
+    await dispatchExternalWebhook('telegram.lead_message', {
+      chat_id: chatId,
+      lead_name: leadName,
+      username: telegramUsername,
+      text,
+      utm_source: utmSource,
+      utm_campaign: utmCampaign,
+      utm_content: utmContent,
+    })
+
+    // 7. Fast 200 OK to Telegram (idempotent, immediate)
     return NextResponse.json(
       {
         ok: true,
