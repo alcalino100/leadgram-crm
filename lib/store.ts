@@ -11,7 +11,8 @@ import {
   ConversationStatus, 
   MessageType,
   PaymentTransaction,
-  PaymentGatewayProvider
+  PaymentGatewayProvider,
+  Campaign
 } from '@/types'
 import { 
   mockOrganizations, 
@@ -19,7 +20,8 @@ import {
   mockUsers, 
   mockTags, 
   mockConversations, 
-  mockMessages 
+  mockMessages,
+  mockCampaigns
 } from '@/lib/mock-data'
 import { calculateLeadScore } from '@/lib/qualification'
 
@@ -69,6 +71,7 @@ interface AppState {
   leads: Lead[]
   leadEvents: LeadEvent[]
   availableTags: Tag[]
+  campaigns: Campaign[]
   conversations: Conversation[]
   messages: Record<string, Message[]>
   activeConversationId: string | null
@@ -111,6 +114,7 @@ interface AppState {
     description: string, 
     provider: PaymentGatewayProvider
   ) => PaymentTransaction
+  addCampaign: (campaign: Omit<Campaign, 'id' | 'created_at'>) => void
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -120,6 +124,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   leads: mockLeads,
   leadEvents: initialEvents,
   availableTags: mockTags,
+  campaigns: mockCampaigns,
   conversations: mockConversations,
   messages: mockMessages,
   activeConversationId: 'conv-1',
@@ -475,5 +480,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
 
     return payment
+  },
+
+  addCampaign: (campaignData) => {
+    const newCampaign: Campaign = {
+      ...campaignData,
+      id: `camp-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    }
+    set((state) => ({
+      campaigns: [newCampaign, ...state.campaigns],
+    }))
   }
 }))
