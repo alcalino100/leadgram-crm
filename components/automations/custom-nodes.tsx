@@ -256,6 +256,24 @@ export function MediaActionNode({ data }: { data: any }) {
         </div>
       </div>
 
+      {/* Prévia da Imagem / Vídeo no Bloco */}
+      {data.url && (
+        <div className="pt-2">
+          {isVideo ? (
+            <div className="relative w-full h-28 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+              <video src={data.url} className="w-full h-full object-cover" muted />
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <VideoIcon className="h-6 w-6 text-pink-400" />
+              </div>
+            </div>
+          ) : (
+            <div className="relative w-full h-28 rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
+              <img src={data.url} alt="Teaser Preview" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="pt-2 text-[11px] text-zinc-400 space-y-1">
         <p className="line-clamp-2">Legenda: "{data.caption || data.message || 'Prévia do conteúdo liberado de hoje 🔥'}"</p>
       </div>

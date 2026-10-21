@@ -21,8 +21,12 @@ import {
   Layers,
   Plus,
   ExternalLink,
-  MousePointerClick
+  MousePointerClick,
+  UploadCloud,
+  Loader2,
+  FileUp
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -54,6 +58,45 @@ export function NodeConfigDrawer({
   // Helper para atualizar campos específicos
   const handleChange = (field: string, value: any) => {
     onUpdateData(node.id, { [field]: value })
+  }
+
+  // Upload direto de mídias para o Supabase Storage
+  const [isUploading, setIsUploading] = React.useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const audioInputRef = React.useRef<HTMLInputElement>(null)
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    const toastId = toast.loading('Enviando arquivo para o banco de dados...')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/crm/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const result = await res.json()
+      if (result.success && result.url) {
+        handleChange(fieldName, result.url)
+        if (fieldName === 'url') {
+          handleChange('mediaName', result.fileName)
+        } else if (fieldName === 'audioUrl') {
+          handleChange('audioName', result.fileName)
+        }
+        toast.success('Arquivo enviado com sucesso!', { id: toastId })
+      } else {
+        toast.error(result.error || 'Erro ao enviar arquivo', { id: toastId })
+      }
+    } catch (err: any) {
+      toast.error('Erro de conexão ao enviar arquivo', { id: toastId })
+    } finally {
+      setIsUploading(false)
+      if (e.target) e.target.value = ''
+    }
   }
 
   // Identificação do Tipo de Bloco
@@ -423,14 +466,68 @@ export function NodeConfigDrawer({
               />
             </div>
 
+            {/* Input oculto para upload de áudio */}
+            <input
+              ref={audioInputRef}
+              type="file"
+              accept="audio/*,.mp3,.ogg,.wav"
+              className="hidden"
+              onChange={(e) => handleFileUpload(e, 'audioUrl')}
+            />
+
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-300">URL do Áudio (MP3 / OGG)</label>
-              <Input
-                value={data.audioUrl || ''}
-                onChange={(e) => handleChange('audioUrl', e.target.value)}
-                placeholder="https://seusite.com/audio/voz_1.mp3"
-                className="bg-zinc-900 border-zinc-700 text-xs font-mono-code"
-              />
+              <label className="text-[11px] font-semibold text-zinc-300">
+                Arquivo de Áudio (Upload Direto do Dispositivo)
+              </label>
+
+              {data.audioUrl ? (
+                <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2">
+                  <audio controls src={data.audioUrl} className="w-full h-8" />
+                  <div className="flex items-center justify-between pt-1 border-t border-zinc-800/80">
+                    <span className="text-[10px] text-zinc-400 font-mono-code truncate max-w-[180px]">
+                      {data.audioName || 'audio_enviado.mp3'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => audioInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="h-6 text-[10px] px-2 border-zinc-700 text-zinc-300"
+                      >
+                        Trocar Áudio
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleChange('audioUrl', '')}
+                        className="h-6 text-[10px] px-1 text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => audioInputRef.current?.click()}
+                  className="p-4 rounded-xl border-2 border-dashed border-zinc-700 hover:border-amber-500/60 bg-zinc-900/60 hover:bg-zinc-900 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-1.5 group"
+                >
+                  <div className="p-2.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
+                    {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mic className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-xs text-zinc-200">
+                      {isUploading ? 'Enviando áudio...' : 'Upload direto de áudio (MP3 / OGG)'}
+                    </p>
+                    <p className="text-[10px] text-zinc-500">
+                      Clique para selecionar áudio do seu computador ou celular
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -488,14 +585,74 @@ export function NodeConfigDrawer({
               </div>
             </div>
 
+            {/* Input oculto para upload de imagem ou vídeo */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={data.mediaType === 'video' ? 'video/*,.mp4,.mov' : 'image/*,.jpg,.jpeg,.png,.webp'}
+              className="hidden"
+              onChange={(e) => handleFileUpload(e, 'url')}
+            />
+
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-300">URL da Imagem ou Vídeo</label>
-              <Input
-                value={data.url || ''}
-                onChange={(e) => handleChange('url', e.target.value)}
-                placeholder="https://seusite.com/previa_blur.jpg"
-                className="bg-zinc-900 border-zinc-700 text-xs font-mono-code"
-              />
+              <label className="text-[11px] font-semibold text-zinc-300">
+                {data.mediaType === 'video' ? 'Vídeo (Upload Direto)' : 'Imagem / Foto (Upload Direto)'} *
+              </label>
+
+              {data.url ? (
+                <div className="space-y-2">
+                  <div className="relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900 group">
+                    {data.mediaType === 'video' ? (
+                      <video src={data.url} controls className="w-full h-40 object-cover" />
+                    ) : (
+                      <img src={data.url} alt="Mídia selecionada" className="w-full h-40 object-cover" />
+                    )}
+                    <div className="p-2 bg-zinc-950/90 border-t border-zinc-800 flex items-center justify-between">
+                      <span className="text-[10px] text-zinc-400 font-mono-code truncate max-w-[180px]">
+                        {data.mediaName || 'foto_enviada.jpg'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="h-6 text-[10px] px-2 border-zinc-700 text-zinc-200"
+                        >
+                          Trocar Foto
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleChange('url', '')}
+                          className="h-6 text-[10px] px-1 text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-5 rounded-xl border-2 border-dashed border-zinc-700 hover:border-pink-500/80 bg-zinc-900/60 hover:bg-zinc-900 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-2 group"
+                >
+                  <div className="p-3 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 group-hover:scale-110 transition-transform">
+                    {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <UploadCloud className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-xs text-zinc-200">
+                      {isUploading ? 'Enviando arquivo...' : 'Clique para selecionar foto do celular ou PC'}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">
+                      Suporta JPG, PNG, WEBP, MP4 direto do seu dispositivo
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">

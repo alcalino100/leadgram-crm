@@ -44,6 +44,33 @@ export function AutomationsManager() {
   const [newTrigger, setNewTrigger] = React.useState('telegram.start')
   const [isSaving, setIsSaving] = React.useState(false)
 
+  // Restaurar automação ativa salva após Hard Refresh
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && automations.length > 0 && !selectedAutomation) {
+      const savedId = localStorage.getItem('leadgram_selected_automation_id')
+      if (savedId) {
+        const found = automations.find((a) => a.id === savedId)
+        if (found) {
+          setSelectedAutomation(found)
+        }
+      }
+    }
+  }, [automations, selectedAutomation])
+
+  const handleSelectAutomation = (auto: any) => {
+    setSelectedAutomation(auto)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('leadgram_selected_automation_id', auto.id)
+    }
+  }
+
+  const handleBackToList = () => {
+    setSelectedAutomation(null)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('leadgram_selected_automation_id')
+    }
+  }
+
   // Criar nova automação
   const handleCreateNew = async () => {
     if (!newTitle.trim()) {
@@ -92,7 +119,7 @@ export function AutomationsManager() {
       toast.success('Automação criada com sucesso!')
       setIsNewDialogOpen(false)
       setNewTitle('')
-      setSelectedAutomation(saved)
+      handleSelectAutomation(saved)
     } else {
       toast.error('Erro ao criar automação no banco de dados')
     }
@@ -136,7 +163,7 @@ export function AutomationsManager() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSelectedAutomation(null)}
+              onClick={handleBackToList}
               className="h-8 text-xs border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-zinc-100"
             >
               <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Voltar para Lista
@@ -215,6 +242,27 @@ export function AutomationsManager() {
               action_config: { ...prev.action_config, nodes, edges },
             }))
           }}
+          onSave={async (nodes, edges) => {
+            setIsSaving(true)
+            const payload = {
+              ...selectedAutomation,
+              action_config: {
+                ...(selectedAutomation.action_config || {}),
+                nodes,
+                edges,
+              },
+            }
+            const saved = await saveAutomation(payload)
+            setIsSaving(false)
+            if (saved) {
+              setSelectedAutomation(saved)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('leadgram_selected_automation_id', saved.id)
+              }
+              return saved
+            }
+            throw new Error('Erro ao salvar no banco de dados')
+          }}
         />
       </div>
     )
@@ -254,7 +302,7 @@ export function AutomationsManager() {
           return (
             <div
               key={auto.id}
-              onClick={() => setSelectedAutomation(auto)}
+              onClick={() => handleSelectAutomation(auto)}
               className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4 hover:border-pink-500/60 transition-all cursor-pointer group flex flex-col justify-between space-y-4 hover:bg-zinc-900/60"
             >
               <div>

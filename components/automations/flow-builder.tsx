@@ -30,7 +30,8 @@ import {
   Save, 
   Check, 
   Sparkles,
-  MousePointerClick
+  MousePointerClick,
+  Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -176,17 +177,20 @@ interface AutomationFlowBuilderProps {
   initialNodes?: Node[]
   initialEdges?: Edge[]
   onNodesEdgesChange?: (nodes: Node[], edges: Edge[]) => void
+  onSave?: (nodes: Node[], edges: Edge[]) => Promise<any> | any
 }
 
 export function AutomationFlowBuilder({
   initialNodes: propNodes,
   initialEdges: propEdges,
   onNodesEdgesChange,
+  onSave,
 }: AutomationFlowBuilderProps = {}) {
   const [nodes, setNodes] = React.useState<Node[]>(propNodes || initialNodes)
   const [edges, setEdges] = React.useState<Edge[]>(propEdges || initialEdges)
   const [selectedNodeId, setSelectedNodeId] = React.useState<string | null>(null)
   const [isSaved, setIsSaved] = React.useState(false)
+  const [isSaving, setIsSaving] = React.useState(false)
 
   // Bloco selecionado reativo
   const selectedNode = React.useMemo(() => {
@@ -320,13 +324,21 @@ export function AutomationFlowBuilder({
     toast.success('Novo bloco adicionado! Configure os detalhes no painel lateral.')
   }
 
-  const handleSave = () => {
-    setIsSaved(true)
+  const handleSave = async () => {
+    setIsSaving(true)
     onNodesEdgesChange?.(nodes, edges)
-    toast.success('Fluxo de automação salvo com sucesso!', {
-      description: 'As alterações foram sincronizadas com o banco de dados.',
-    })
-    setTimeout(() => setIsSaved(false), 2000)
+    try {
+      if (onSave) {
+        await onSave(nodes, edges)
+      }
+      setIsSaved(true)
+      toast.success('Fluxo gravado com sucesso no banco de dados!')
+      setTimeout(() => setIsSaved(false), 2500)
+    } catch (err: any) {
+      toast.error('Erro ao salvar fluxo no banco de dados')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleTestFlow = () => {
@@ -366,10 +378,17 @@ export function AutomationFlowBuilder({
           <Button
             size="sm"
             onClick={handleSave}
+            disabled={isSaving}
             className="bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs h-8 gap-1.5 shadow-md shadow-pink-600/20"
           >
-            {isSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-            <span>{isSaved ? 'Salvo!' : 'Salvar Automação'}</span>
+            {isSaving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : isSaved ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            <span>{isSaving ? 'Gravando no Banco...' : isSaved ? 'Salvo no Banco!' : 'Salvar Automação'}</span>
           </Button>
         </div>
       </div>
